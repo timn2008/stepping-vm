@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Table</title>
+    <style>
+        /* Add basic styling for the table */
+        .table-container {
+            display: flex;
+            flex-direction: column;
+            //width: 400px;
+            margin: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #ddd;
+        }
+
+        td {
+            //background-color: #fff;
+        }
+
+        .highlighted {
+            background-color: yellow;
+        }
+
+        .table-buttons {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        button {
+            //margin: 5px;
+        }
+
+        /* Add some styling for the blackboard */
+        .blackboard {
+            background-color: #fdffe5;
+            border: 1px solid #9c63f8;
+            padding: 10px;
+            margin-top: 20px;
+            min-height: 200px;
+            min-width: 250px;
+        }
+
+        /* Style for highlighted rows */
+/*
+        .highlighted-row {
+            background-color: cyan;
+            animation: highlight 2s;
+        }
+
+        // Keyframe animation for highlighting 
+        @keyframes highlight {
+            from {
+                background-color: cyan;
+            }
+            to {
+                background-color: inherit;
+            }
+        }
+*/
+
+        /* Keyframe animation for highlighting the blackboard row */
+        @keyframes highlightBlackboardRow {
+            0% { background-color: rgb(164, 253, 104); }
+            100% { background-color: inherit; }
+        }
+
+        /* Apply the animation to the highlighted-row class */
+        .highlighted-row {
+            animation: highlightBlackboardRow 0.2s; /* Adjust the duration as needed */
+        }
+
+
+        .blackboard-row-style {
+            border-bottom: 1px solid lightgrey;
+        }
+
+
+        /* Style for the tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            background-color: #fff7ae;
+            color: #004b10;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: opacity 0.2s;
+            font-size: medium;
+            font-weight: normal;
+            max-height: 200px;
+            width: 300px;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <textarea id="src_txt" cols="120" rows="10">
+1	2	+	0	#1	2	тут вводиться значення x
+2	1	+	0	#2	3	1 -> s
+3	#1	/	#2	#3	4	x/s -> row3
+4	#3	-	#2	#3	5	x/s - s == row3 - s -> row3
+5	#3	/	2	#3	6	row3/2 -> row3
+6	0	+	#3	#4	7	row3 -> row4
+7	#4	<	0		8/9	row4 < 0 => compute abs
+8	0	-	#4	#4	9	-row4 -> row4
+9	#4	<	0.0001		/10	|row3| < thresh => exit
+10	#3	+	#2	#2	3	s += row3 ; repeat
+    </textarea>
+    <button onclick="restoreTableFromPlainText(document.all['src_txt'].value.trim());">Завантажити програму в машину</button>
+    <button onclick="document.all['src_txt'].value = tableToPlainText();">Скопіювати програму із машини </button>
+
+
+    <hr>
+    <div align="center" style="font-weight: bold; color: #001488;">Симулятор процесора</div>
+
+    <div style="display: flex;">
+
+        <div>
+            Листочок в лінійку:<br>
+            <div class="blackboard" id="blackboard">
+                <!-- Rows will be dynamically added here -->
+            </div>
+        </div>
+
+        <div>    
+            <div class="table-container">
+                <div>
+                    Інструкції:
+                    <button id="reset-table">На початок</button>
+                    <button id="next-step">Виконати крок &gt;&gt;</button>    
+                    &nbsp;&nbsp;&nbsp;
+                    <span id="op_report"></span>
+                </div>
+                
+                <br>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Крок
+                                <sup class="tooltip">&#8505;<span class="tooltip-text">Порядковий номер кроку або його текстовий ідентифікатор, унікальний в межах програми</span></sup>
+                            </th>
+                            <th>Перший аргумент
+                                <sup class="tooltip">&#8505;<span class="tooltip-text">Число або символ # й номер рядка на листочку в лінійку</span></sup>
+                            </th>
+                            <th>Операція
+                                <sup class="tooltip">&#8505;<span class="tooltip-text">Допустимі операції:<br>+, -, *, /, <br> &gt; , &lt; </span></sup>
+                            </th>
+                            <th>Другий аргумент
+                                <sup class="tooltip">&#8505;<span class="tooltip-text">Число або символ # й номер рядка на листочку</span></sup>
+                            </th>
+                            <th>Рядок для збереження результату
+                                <sup class="tooltip">&#8505;<span class="tooltip-text">Потрібно вказати як символ # й номер рядка на листочку</span></sup>
+                            </th>
+                            <th>Наступний крок
+                                <sup class="tooltip">&#8505;<span class="tooltip-text">Номер (або текстовий ідентифікатор) кроку, який має виконуватися після даного<br>
+                                    Для операцій &gt; та &lt; ці "номери" вказуються через / -- для випадків, коли порівняння істинне ("чисельник") або хибне ("знаменник")<br>
+                                Якщо вказано порожнє значення, програма завершується. </span></sup>
+                            </th>
+<!--                            <th>Actions</th> -->
+                            <th>Опис
+                                <sup class="tooltip">&#8505;<span class="tooltip-text">Генерується автоматично (заповнювати не потрібно)
+                                </span></sup>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Rows will be dynamically added here -->
+                    </tbody>
+                </table>
+            </div>
+            <p><button id="add-row">Add Row</button>
+        </div>
+
+<!--
+        <div>
+            <p><button id="reset-table">Reset</button>
+            <p><button id="next-step">Next Step &gt;&gt; </button>
+        </div>
+-->
+
+    </div>
+
+    <hr>
+
+    <script src="script.js"></script>
+</body>
+</html>
