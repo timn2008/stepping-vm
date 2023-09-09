@@ -1,3 +1,5 @@
+//---------------------------------------------------------------------------------------------
+
 const tableBody = document.getElementById('table-body');
 const addRowButton = document.getElementById('add-row');
 const resetTableButton = document.getElementById('reset-table');
@@ -12,7 +14,7 @@ function make_description(args) {
         if (op[0] != "#") {
             return (a ? "числа " : "число ")+op;
         } else {
-            return (a ? "числа " : "число")+", яке записане на рядку "+op+","
+            return (a ? "числа" : "число")+", яке записане на рядку "+op+","
         }
     }
     var op1 = op2txt(args[0] || '');
@@ -52,6 +54,7 @@ function make_description(args) {
     }
 
     return s;
+    //return `<small>${s}</small>`;
 }
 
 // Function to add a new row to the table
@@ -64,9 +67,9 @@ function addTableRow(currentRowNumber, args = ['', '', '', '', '']) {
         <td contenteditable="true">${args[2]}</td>
         <td contenteditable="true">${args[3]}</td>
         <td contenteditable="true">${args[4]}</td>
-        <td contenteditable="true" class="actions">${make_description(args)}</td>
+        <td contenteditable="true" class="actions narrowfont">${make_description(args)}</td>
         
-        <td class="actions">
+        <td class="actions narrowfont">
             <button class="move-up">&uarr;</button>
             <button class="move-down">&darr;</button>
             <button class="delete-row">&#10005;</button>
@@ -313,3 +316,22 @@ tableBody.addEventListener('input', (event) => {
         [rowData.firstDataSource, rowData.operation, rowData.secondDataSource, rowData.destination, rowData.nextStep]
     );
 });
+
+/*
+
+
+1	81	+	0	#1	k	тут вводиться значення x
+k	1	+	0	#2	3	1 -> s
+3	#1	/	#2	#3	4	x/s -> row3
+4	#3	-	#2	#3	5	x/s - s == row3 - s -> row3
+5	#3	/	2	#3	6	row3/2 -> row3
+6	0	+	#3	#4	7	row3 -> row4
+7	#4	<	0		8/else	row4 < 0 => compute abs
+8	0	-	#4	#4	else	-row4 -> row4
+else	#4	<	0.0001		/10	|row3| < thresh => exit
+10	#3	+	#2	#2	3	s += row3 ; repeat
+    
+
+// for(var i=0; i<10000; i++) document.all['next-step'].click();
+
+*/
