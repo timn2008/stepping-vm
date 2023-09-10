@@ -8,18 +8,19 @@ let currentRowNumber = 1;
 
 //---------------------------------------------------------------------------------------------
 function make_description(args) {
-    function op2txt(op, a=false) {
+    function op2txt(op, a='о') {
         if (op.trim().length==0) 
             return "...";
         if (op[0] != "#") {
-            return (a ? "числа " : "число ")+op;
+            return `числ${a} ${op}`;
         } else {
-            return (a ? "числа" : "число")+", яке записане на рядку "+op+","
+            return `числ${a}, яке записане на рядку ${op},`;
         }
     }
     var op1 = op2txt(args[0] || '');
-    var op1a = op2txt(args[0] || '', true);
+    var op1a = op2txt(args[0] || '', 'а');
     var op2 = op2txt(args[2] || '');
+    var op2u = op2txt(args[2] || '', 'у');
     var dest = args[3] || '';
     var nxt = args[4] || '';
     var cmd = args[1] || '';
@@ -39,12 +40,15 @@ function make_description(args) {
                 const branch2 = parseInt(parts[1], 10); // Use base 10 for parsing            
                 var cmd_txt = "";
                 if (cmd == '>') {
-                    cmd_txt = "більше";
+                    cmd_txt = "більше за " + op2;
                 } else 
                 if (cmd == '<') {
-                    cmd_txt = "менше";
+                    cmd_txt = "менше за " + op2;
+                } else 
+                if ((cmd == '=')||(cmd == '==')) {
+                    cmd_txt = "рівне " + op2u;
                 }            
-                s = `Перевірити, чи ${op1} ${cmd_txt} за ${op2} `;
+                s = `Перевірити, чи ${op1} ${cmd_txt} `;
                 if (dest.trim().length > 0) {
                     s += `і записати результат на рядок ${dest}`;
                 }
@@ -61,12 +65,12 @@ function make_description(args) {
 function addTableRow(currentRowNumber, args = ['', '', '', '', '']) {
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
-        <td contenteditable="true">${currentRowNumber}</td>
-        <td contenteditable="true">${args[0]}</td>
-        <td contenteditable="true">${args[1]}</td>
-        <td contenteditable="true">${args[2]}</td>
-        <td contenteditable="true">${args[3]}</td>
-        <td contenteditable="true">${args[4]}</td>
+        <td contenteditable="true" class="tbl_col0">${currentRowNumber}</td>
+        <td contenteditable="true" class="tbl_col1">${args[0]}</td>
+        <td contenteditable="true" class="tbl_col2">${args[1]}</td>
+        <td contenteditable="true" class="tbl_col3">${args[2]}</td>
+        <td contenteditable="true" class="tbl_col4">${args[3]}</td>
+        <td contenteditable="true" class="tbl_col5">${args[4]}</td>
         <td contenteditable="true" class="actions narrowfont">${make_description(args)}</td>
         
         <td class="actions narrowfont">
@@ -211,6 +215,9 @@ function exec_step_computations(op1, cmd, op2, next_step) {
             } else 
             if (cmd == '<') {
                 res = (op1 < op2);
+            } else 
+            if ((cmd == '=')||(cmd == '==')) {
+                res = (op1 == op2);
             }            
             next_step = res ? branch1 : branch2;
             res = res ? 1 : 0;
